@@ -1,182 +1,253 @@
-import React, { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, Label } from 'recharts';
-import { BookOpen, Info, ShieldCheck, Zap, Mountain, Ruler } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeboah's Law Digital Twin v2.0</title>
+    
+    <!-- 1. Tailwind for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. React Core -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 3. Recharts Dependencies (Required for the graph to work) -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    
+    <!-- 4. Babel for running React in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-const YeboahDigitalTwinV2 = () => {
-  const [m, setM] = useState(4.5);
-  const [v, setV] = useState(6.0);
-  const [ky, setKy] = useState(0.82);
-  const [tau, setTau] = useState(12.0);
-  const [a, setA] = useState(2.0);
-  const [d, setD] = useState(20.0);
-  const [material, setMaterial] = useState('Oak Fibre');
+    <style>
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 3px solid currentColor;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
 
-  const kineticEnergy = 0.5 * m * Math.pow(v, 2);
-  const workRequired = (tau * a * d) / 1000; 
-  const eta = (ky * kineticEnergy) / workRequired;
+    <script type="text/babel">
+        // Safety check: Wait for Recharts to be available on the window object
+        const { 
+            LineChart, Line, XAxis, YAxis, CartesianGrid, 
+            Tooltip, ReferenceLine, ResponsiveContainer, Label 
+        } = window.Recharts;
 
-  const generateGraphData = () => {
-    const data = [];
-    for (let i = 0; i <= 20; i += 0.5) {
-      const tempKe = 0.5 * m * Math.pow(i, 2);
-      const tempEta = (ky * tempKe) / workRequired;
-      data.push({ velocity: i, eta: parseFloat(tempEta.toFixed(2)) });
-    }
-    return data;
-  };
+        const { useState, useEffect } = React;
 
-  const materialPresets = {
-    'Synthetic Dermis': { m: 0.5, v: 5.0, ky: 0.95, tau: 2.5, a: 0.5, d: 2.0 },
-    'Oak Fibre': { m: 4.5, v: 6.0, ky: 0.82, tau: 12.0, a: 2.0, d: 20.0 },
-    'Hair (Axe)': { m: 0.5, v: 5.0, ky: 0.80, tau: 150.0, a: 0.005, d: 0.05 },
-    'Mild Steel (Industrial)': { m: 10.0, v: 12.0, ky: 0.75, tau: 250.0, a: 5.0, d: 10.0 }
-  };
+        const App = () => {
+            const [m, setM] = useState(4.5);
+            const [v, setV] = useState(6.0);
+            const [ky, setKy] = useState(0.82);
+            const [tau, setTau] = useState(12.0);
+            const [a, setA] = useState(2.0);
+            const [d, setD] = useState(20.0);
+            const [material, setMaterial] = useState('Oak Fibre');
 
-  const applyPreset = (name) => {
-    const p = materialPresets[name];
-    setM(p.m); setV(p.v); setKy(p.ky); setTau(p.tau); setA(p.a); setD(p.d);
-    setMaterial(name);
-  };
+            const kineticEnergy = 0.5 * m * Math.pow(v, 2);
+            const workRequired = (tau * a * d) / 1000; 
+            const eta = (ky * kineticEnergy) / workRequired;
 
-  return (
-    <div className="p-6 max-w-6xl mx-auto bg-slate-50 min-h-screen font-sans text-slate-800">
-      <header className="mb-8 border-b border-slate-200 pb-4 flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Yeboah’s Law Digital Twin <span className="text-blue-600">v2.0</span></h1>
-          <p className="text-slate-500 italic">Predictive Simulation for Dynamic Material Separation</p>
-        </div>
-        <div className="text-right hidden md:block">
-          <span className="text-xs font-mono bg-blue-100 px-2 py-1 rounded text-blue-700 border border-blue-200">LICENSED: CC BY-NC-ND 4.0</span>
-        </div>
-      </header>
+            const materialPresets = {
+                'Synthetic Dermis': { m: 0.5, v: 5.0, ky: 0.95, tau: 2.5, a: 0.5, d: 2.0 },
+                'Oak Fibre': { m: 4.5, v: 6.0, ky: 0.82, tau: 12.0, a: 2.0, d: 20.0 },
+                'Hair (Axe)': { m: 0.5, v: 5.0, ky: 0.80, tau: 150.0, a: 0.005, d: 0.05 },
+                'Mild Steel (Industrial)': { m: 10.0, v: 12.0, ky: 0.75, tau: 250.0, a: 5.0, d: 10.0 }
+            };
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <div>
-            <label className="flex items-center gap-2 font-semibold mb-3 text-slate-700 text-sm">
-              <BookOpen size={16} /> Material Library
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.keys(materialPresets).map(name => (
-                <button 
-                  key={name}
-                  onClick={() => applyPreset(name)}
-                  className={`text-left px-2 py-2 rounded-md text-[10px] uppercase font-bold transition ${material === name ? 'bg-slate-800 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-          </div>
+            const generateGraphData = () => {
+                const data = [];
+                for (let i = 0; i <= 20; i += 0.5) {
+                    const tempKe = 0.5 * m * Math.pow(i, 2);
+                    const tempEta = (ky * tempKe) / workRequired;
+                    data.push({ velocity: i, eta: parseFloat(tempEta.toFixed(2)) });
+                }
+                return data;
+            };
 
-          <div className="space-y-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-            <h3 className="font-bold text-blue-700 text-xs flex items-center gap-2 uppercase"><Zap size={14}/> Kinetic Input (E_in)</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1">Mass (m): {m} kg</label>
-              <input type="range" min="0.1" max="15" step="0.1" value={m} onChange={(e) => {setM(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1">Velocity (v): {v} m/s</label>
-              <input type="range" min="0.1" max="30" step="0.1" value={v} onChange={(e) => {setV(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-            </div>
-          </div>
+            const applyPreset = (name) => {
+                const p = materialPresets[name];
+                setM(p.m); setV(p.v); setKy(p.ky); setTau(p.tau); setA(p.a); setD(p.d);
+                setMaterial(name);
+            };
 
-          <div className="space-y-4 p-3 bg-red-50 rounded-lg border border-red-100">
-            <h3 className="font-bold text-red-700 text-xs flex items-center gap-2 uppercase"><Mountain size={14}/> Resistance (τ)</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-red-600 uppercase mb-1">Shear Strength (τ): {tau} MPa</label>
-              <input type="range" min="1" max="500" step="1" value={tau} onChange={(e) => {setTau(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-red-200 rounded-lg appearance-none cursor-pointer accent-red-600" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-red-600 uppercase mb-1">Yeboah Constant (kY): {ky}</label>
-              <input type="range" min="0.5" max="1.0" step="0.01" value={ky} onChange={(e) => {setKy(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-red-200 rounded-lg appearance-none cursor-pointer accent-red-600" />
-            </div>
-          </div>
+            return (
+                <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen font-sans text-slate-800">
+                    <header className="mb-8 border-b border-slate-200 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Yeboah’s Law Digital Twin <span className="text-blue-600">v2.0</span></h1>
+                            <p className="text-slate-500 italic">Official Predictive Simulation for Dynamic Material Separation</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-[10px] font-mono bg-blue-100 px-2 py-1 rounded text-blue-700 border border-blue-200 uppercase font-bold">Licensed: CC BY-NC-ND 4.0</span>
+                        </div>
+                    </header>
 
-          <div className="space-y-4 p-3 bg-green-50 rounded-lg border border-green-100">
-            <h3 className="font-bold text-green-700 text-xs flex items-center gap-2 uppercase"><Ruler size={14}/> Geometry & Depth</h3>
-            <div>
-              <label className="block text-[10px] font-bold text-green-600 uppercase mb-1">Contact Area (A): {a} mm²</label>
-              <input type="range" min="0.001" max="10" step="0.001" value={a} onChange={(e) => {setA(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-green-600 uppercase mb-1">Material Depth (d): {d} mm</label>
-              <input type="range" min="0.01" max="50" step="0.01" value={d} onChange={(e) => {setD(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600" />
-            </div>
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Sidebar Controls */}
+                        <div className="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <div>
+                                <label className="flex items-center gap-2 font-bold mb-3 text-slate-700 text-xs uppercase tracking-widest">
+                                    Material Library
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.keys(materialPresets).map(name => (
+                                        <button 
+                                            key={name}
+                                            onClick={() => applyPreset(name)}
+                                            className={`text-left px-2 py-2 rounded-md text-[10px] uppercase font-bold transition-all ${material === name ? 'bg-slate-800 text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                                        >
+                                            {name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className={`p-4 rounded-xl shadow-sm border transition-colors ${eta >= 1 ? 'bg-green-600 text-white border-green-700' : 'bg-red-600 text-white border-red-700'}`}>
-              <p className="text-[10px] font-bold uppercase opacity-80">Efficiency Ratio (η)</p>
-              <p className="text-4xl font-black">{eta.toFixed(2)}</p>
-              <p className="text-[10px] mt-1 font-bold uppercase tracking-wider">{eta >= 1 ? 'SUPER-CRITICAL (CLEAN CUT)' : 'SUB-CRITICAL (FAILURE)'}</p>
-            </div>
-            
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 border-b-4 border-b-blue-500">
-              <p className="text-[10px] text-slate-500 font-bold uppercase">Kinetic Energy (E_in)</p>
-              <p className="text-2xl font-bold text-slate-800">{kineticEnergy.toFixed(2)} J</p>
-              <p className="text-[10px] text-blue-500 font-mono">0.5 * m * v²</p>
-            </div>
+                            <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <h3 className="font-bold text-blue-700 text-[10px] uppercase tracking-widest">Kinetic Input (E_in)</h3>
+                                <div>
+                                    <label className="flex justify-between text-[10px] font-bold text-blue-600 uppercase mb-1">
+                                        <span>Mass (m)</span>
+                                        <span>{m} kg</span>
+                                    </label>
+                                    <input type="range" min="0.1" max="15" step="0.1" value={m} onChange={(e) => {setM(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600 text-blue-600" />
+                                </div>
+                                <div>
+                                    <label className="flex justify-between text-[10px] font-bold text-blue-600 uppercase mb-1">
+                                        <span>Velocity (v)</span>
+                                        <span>{v} m/s</span>
+                                    </label>
+                                    <input type="range" min="0.1" max="30" step="0.1" value={v} onChange={(e) => {setV(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600 text-blue-600" />
+                                </div>
+                            </div>
 
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 border-b-4 border-b-red-500">
-              <p className="text-[10px] text-slate-500 font-bold uppercase">Work Required (W_req)</p>
-              <p className="text-2xl font-bold text-slate-800">{workRequired.toFixed(4)} J</p>
-              <p className="text-[10px] text-red-500 font-mono">τ * A * d</p>
-            </div>
-          </div>
+                            <div className="space-y-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                                <h3 className="font-bold text-red-700 text-[10px] uppercase tracking-widest">Resistance (τ)</h3>
+                                <div>
+                                    <label className="flex justify-between text-[10px] font-bold text-red-600 uppercase mb-1">
+                                        <span>Shear Strength (τ)</span>
+                                        <span>{tau} MPa</span>
+                                    </label>
+                                    <input type="range" min="1" max="500" step="1" value={tau} onChange={(e) => {setTau(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-red-200 rounded-lg appearance-none cursor-pointer accent-red-600 text-red-600" />
+                                </div>
+                                <div>
+                                    <label className="flex justify-between text-[10px] font-bold text-red-600 uppercase mb-1">
+                                        <span>Yeboah Constant (kY)</span>
+                                        <span>{ky}</span>
+                                    </label>
+                                    <input type="range" min="0.5" max="1.0" step="0.01" value={ky} onChange={(e) => {setKy(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-red-200 rounded-lg appearance-none cursor-pointer accent-red-600 text-red-600" />
+                                </div>
+                            </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-96">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <Info size={16} className="text-blue-500"/> Efficiency Curve (η vs Velocity)
-              </h3>
-              <span className="text-[10px] font-mono bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase tracking-tighter">Material: {material}</span>
-            </div>
-            <ResponsiveContainer width="100%" height="90%">
-              <LineChart data={generateGraphData()}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="velocity" fontSize={10} tickMargin={10}>
-                  <Label value="Impact Velocity (m/s)" offset={-5} position="insideBottom" fontSize={10} />
-                </XAxis>
-                <YAxis fontSize={10}>
-                  <Label value="Efficiency (η)" angle={-90} position="insideLeft" fontSize={10} />
-                </YAxis>
-                <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                  formatter={(value) => [`η = ${value}`, 'Efficiency']}
-                />
-                <ReferenceLine y={1} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'right', value: 'Unity (1.0)', fill: '#ef4444', fontSize: 10, fontWeight: 'bold' }} />
-                <Line type="monotone" dataKey="eta" stroke="#2563eb" strokeWidth={3} dot={false} animationDuration={300} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+                            <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-100">
+                                <h3 className="font-bold text-green-700 text-[10px] uppercase tracking-widest">Geometry & Depth</h3>
+                                <div>
+                                    <label className="flex justify-between text-[10px] font-bold text-green-600 uppercase mb-1">
+                                        <span>Contact Area (A)</span>
+                                        <span>{a} mm²</span>
+                                    </label>
+                                    <input type="range" min="0.001" max="10" step="0.001" value={a} onChange={(e) => {setA(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600 text-green-600" />
+                                </div>
+                                <div>
+                                    <label className="flex justify-between text-[10px] font-bold text-green-600 uppercase mb-1">
+                                        <span>Material Depth (d)</span>
+                                        <span>{d} mm</span>
+                                    </label>
+                                    <input type="range" min="0.01" max="50" step="0.01" value={d} onChange={(e) => {setD(parseFloat(e.target.value)); setMaterial('Custom');}} className="w-full h-1.5 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600 text-green-600" />
+                                </div>
+                            </div>
+                        </div>
 
-          <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <ShieldCheck className="text-blue-400" size={20} /> Mathematical Validation
-              </h3>
-              <span className="text-[10px] font-mono text-slate-400 tracking-widest uppercase">Yeboah's Law v2.0</span>
-            </div>
-            <div className="font-mono text-xs space-y-2 opacity-90 bg-slate-800 p-4 rounded-lg border border-slate-700">
-              <p className="text-blue-300">η = kY * [ (0.5 * {m}kg * {v}m/s²) / ({tau}MPa * {a}mm² * {d}mm) ]</p>
-              <p>η = {ky} * [ ({kineticEnergy.toFixed(2)} J) / ({workRequired.toFixed(4)} J) ]</p>
-              <div className="pt-2 border-t border-slate-700 mt-2">
-                <p className={`font-bold ${eta >= 1 ? 'text-green-400' : 'text-red-400'}`}>Final Result: η = {eta.toFixed(4)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <footer className="mt-12 pt-8 border-t border-slate-200 text-center text-slate-500">
-        <p className="text-sm font-bold text-slate-800">© 2026 Clifford Yeboah. All Rights Reserved.</p>
-        <p className="text-[10px] mt-1 uppercase tracking-widest">Licensed under Creative Commons Attribution-NonCommercial-NoDerivs 4.0 International (CC BY-NC-ND 4.0)</p>
-      </footer>
-    </div>
-  );
-};
+                        {/* Main Content */}
+                        <div className="lg:col-span-2 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className={`p-5 rounded-xl shadow-sm border transition-all duration-500 ${eta >= 1 ? 'bg-green-600 text-white border-green-700' : 'bg-red-600 text-white border-red-700'}`}>
+                                    <p className="text-[10px] font-bold uppercase opacity-80 tracking-widest">Efficiency Ratio (η)</p>
+                                    <p className="text-5xl font-black my-1">{eta.toFixed(2)}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest bg-black/20 py-1 px-2 rounded inline-block">{eta >= 1 ? 'SUPER-CRITICAL' : 'SUB-CRITICAL'}</p>
+                                </div>
+                                
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-b-4 border-b-blue-500">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kinetic Energy (E_in)</p>
+                                    <p className="text-2xl font-bold text-slate-800">{kineticEnergy.toFixed(2)} J</p>
+                                    <p className="text-[10px] text-blue-500 font-mono mt-1 italic">0.5 * m * v²</p>
+                                </div>
 
-export default YeboahDigitalTwinV2;
+                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-b-4 border-b-red-500">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Work Required (W_req)</p>
+                                    <p className="text-2xl font-bold text-slate-800">{workRequired.toFixed(4)} J</p>
+                                    <p className="text-[10px] text-red-500 font-mono mt-1 italic">τ * A * d / 1000</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-96">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-widest">Efficiency Curve (η vs Velocity)</h3>
+                                    <span className="text-[10px] font-mono bg-slate-100 px-3 py-1 rounded-full text-slate-500 uppercase font-bold">Material: {material}</span>
+                                </div>
+                                <div className="w-full h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={generateGraphData()}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="velocity" fontSize={10} tickMargin={10} stroke="#94a3b8">
+                                                <Label value="Impact Velocity (m/s)" offset={-5} position="insideBottom" fontSize={10} fill="#64748b" />
+                                            </XAxis>
+                                            <YAxis fontSize={10} stroke="#94a3b8">
+                                                <Label value="Efficiency (η)" angle={-90} position="insideLeft" fontSize={10} fill="#64748b" />
+                                            </YAxis>
+                                            <Tooltip 
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                                                formatter={(value) => [`η = ${value}`, 'Efficiency']}
+                                            />
+                                            <ReferenceLine y={1} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'right', value: 'Unity (1.0)', fill: '#ef4444', fontSize: 10, fontWeight: 'bold' }} />
+                                            <Line type="monotone" dataKey="eta" stroke="#2563eb" strokeWidth={4} dot={false} isAnimationActive={false} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="text-lg font-bold tracking-tight">Mathematical Validation</h3>
+                                    <span className="text-[10px] font-mono text-slate-400 tracking-widest uppercase">Yeboah's Law v2.0</span>
+                                </div>
+                                <div className="font-mono text-xs space-y-3 opacity-90 bg-slate-800/50 p-5 rounded-lg border border-slate-700">
+                                    <p className="text-blue-300">η = kY * [ (0.5 * {m}kg * {v}m/s²) / ({tau}MPa * {a}mm² * {d}mm / 1000) ]</p>
+                                    <p>η = {ky} * [ ({kineticEnergy.toFixed(2)} J) / ({workRequired.toFixed(4)} J) ]</p>
+                                    <div className="pt-3 border-t border-slate-700 mt-2">
+                                        <p className={`text-sm font-bold ${eta >= 1 ? 'text-green-400' : 'text-red-400'}`}>Final Result: η = {eta.toFixed(4)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <footer className="mt-12 pt-8 border-t border-slate-200 text-center text-slate-500">
+                        <p className="text-sm font-bold text-slate-800">© 2026 Clifford Yeboah. All Rights Reserved.</p>
+                        <p className="text-[10px] mt-2 uppercase tracking-widest leading-relaxed">
+                            Licensed under Creative Commons Attribution-NonCommercial-NoDerivs 4.0 International (CC BY-NC-ND 4.0)
+                        </p>
+                    </footer>
+                </div>
+            );
+        };
+
+        // Final Render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
